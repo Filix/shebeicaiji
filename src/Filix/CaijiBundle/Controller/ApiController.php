@@ -19,7 +19,7 @@ class ApiController extends Controller
     /**
      * 增加记录
      * @Route("/data/add", name="log_add")
-     * @Method({"POST", "GET"})
+     * @Method({"POST"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="add feed",
@@ -51,7 +51,7 @@ class ApiController extends Controller
     /**
      * 获取记录
      * @Route("/data/list", name="log_list")
-     * @Method({"POST", "GET"})
+     * @Method({"POST"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
@@ -92,7 +92,7 @@ class ApiController extends Controller
     /**
      * 登录
      * @Route("/passport/login", name="passport_login")
-     * @Method({"POST", "GET"})
+     * @Method({"POST"})
      * @ApiDoc(
      *  section="Api Passport",
      *  description="login",
