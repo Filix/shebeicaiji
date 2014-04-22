@@ -1,0 +1,7 @@
+parameters:
+#    filix_caiji.example.class: Filix\CaijiBundle\Example
+
+services:
+#    filix_caiji.example:
+#        class: %filix_caiji.example.class%
+#        arguments: [@service_id, "plain_value", %parameter%]

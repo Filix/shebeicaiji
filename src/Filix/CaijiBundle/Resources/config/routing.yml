@@ -1,0 +1,11 @@
+index:
+    pattern:  /
+    defaults: { _controller: FilixCaijiBundle:Page:index }
+    
+login:
+    pattern:  /login
+    defaults: { _controller: FilixCaijiBundle:Security:login }
+    
+register:
+    pattern:  /register
+    defaults: { _controller: FilixCaijiBundle:Registration:register }

@@ -1,13 +1,18 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
     <head>
-        <meta charset="UTF-8" />
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="description" content="{% block description %}Welcome!{% endblock %}"/>
+        <meta name="keywords" content="{% block keywords %}Welcome!{% endblock %}" />
         <title>{% block title %}Welcome!{% endblock %}</title>
+        {% block css %}
+        <link href="http://vidonn.com/style/main.css" rel="stylesheet" />
+        <link href="http://vidonn.com/style/download.css" rel="stylesheet" />
+        {% endblock %}
         {% block stylesheets %}{% endblock %}
-        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}" />
     </head>
     <body>
-        {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
+        {% block top %}{% endblock %}
+        {% block content %}{% endblock %}
     </body>
 </html>

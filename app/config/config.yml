@@ -67,3 +67,15 @@ swiftmailer:
     username:  "%mailer_user%"
     password:  "%mailer_password%"
     spool:     { type: memory }
+
+fos_user:
+    db_driver: orm 
+    firewall_name: main
+    user_class: Filix\CaijiBundle\Entity\User
+    
+    #需要邮件激活
+    registration:
+        confirmation:
+            enabled:    false
+            
+nelmio_api_doc: ~

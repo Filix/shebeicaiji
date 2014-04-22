@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="description" content="{% block description %}Welcome!{% endblock %}"/>
+        <meta name="keywords" content="{% block keywords %}Welcome!{% endblock %}" />
+        <title>{% block title %}Welcome!{% endblock %}</title>
+        {% block css %}
+        <link href="http://vidonn.com/style/main.css" rel="stylesheet" />
+        <link href="http://vidonn.com/style/download.css" rel="stylesheet" />
+        {% endblock %}
+        {% block stylesheets %}
+        <style type="text/css">
+            #yddContainer{display:block;font-family:Microsoft YaHei;position:relative;width:100%;height:100%;top:-4px;left:-4px;font-size:12px;border:1px solid}
+            #yddTop{display:block;height:22px}
+            #yddTopBorderlr{display:block;position:static;height:17px;padding:2px 28px;line-height:17px;font-size:12px;color:#5079bb;font-weight:bold;border-style:none solid;border-width:1px}
+            #yddTopBorderlr .ydd-sp{position:absolute;top:2px;height:0;overflow:hidden}
+            .ydd-icon{left:5px;width:17px;padding:0px 0px 0px 0px;padding-top:17px;background-position:-16px -44px}
+            .ydd-close{right:5px;width:16px;padding-top:16px;background-position:left -44px}
+            #yddKeyTitle{float:left;text-decoration:none}
+            #yddMiddle{display:block;margin-bottom:10px}
+            .ydd-tabs{display:block;margin:5px 0;padding:0 5px;height:18px;border-bottom:1px solid}
+            .ydd-tab{display:block;float:left;height:18px;margin:0 5px -1px 0;padding:0 4px;line-height:18px;border:1px solid;border-bottom:none}
+            .ydd-trans-container{display:block;line-height:160%}
+            .ydd-trans-container a{text-decoration:none;}
+            #yddBottom{position:absolute;bottom:0;left:0;width:100%;height:22px;line-height:22px;overflow:hidden;background-position:left -22px}
+            .ydd-padding010{padding:0 10px}
+            #yddWrapper{color:#252525;z-index:10001;background:url(chrome-extension://eopjamdnofihpioajgfdikhhbobonhbb/ab20.png);}
+            #yddContainer{background:#fff;border-color:#4b7598}
+            #yddTopBorderlr{border-color:#f0f8fc}
+            #yddWrapper .ydd-sp{background-image:url(chrome-extension://eopjamdnofihpioajgfdikhhbobonhbb/ydd-sprite.png)}
+            #yddWrapper a,#yddWrapper a:hover,#yddWrapper a:visited{color:#50799b}
+            #yddWrapper .ydd-tabs{color:#959595}
+            .ydd-tabs,.ydd-tab{background:#fff;border-color:#d5e7f3}
+            #yddBottom{color:#363636}
+            #yddWrapper{min-width:250px;max-width:400px;}
+        </style>
+        {% endblock %}
+        
+    </head>
+    <body>
+        {% block top %}
+        <div id="wrap">
+            <div class="top_top">
+                <div class="left">欢迎来到唯动！</div>
+                <div class="right">
+                    {% if app.user %}
+                    你好，{{ app.user.username }} |<a href="{{ path('fos_user_security_logout') }}">退出</a>
+                    {% else %}
+                    <a href="{{ path('login') }}">登录</a>|<a href="{{ path('register') }}">注册</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+        {% block content %}
+        <div class="top">
+            <div class="text w_990 bg_333">
+                <div class="left logo"><a href="{{ path('index') }}"></a></div>
+                <div class="right menu">
+                    <ul>
+                        <li><a href="#" class="home">首页</a></li>
+                        <li><a href="#" class="product">产品</a></li>
+                        <li><a href="#" class="service">服务</a></li>
+                        <li><a href="#" class="download">下载</a></li>
+                        <li><a href="#" class="usercenter">用户中心</a></li>
+                        <li><a href="#" class="about">联系我们</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="h_wrap" style="margin-top:46px">
+            <div class="blk_download clearfix">
+                <div class="pic"><img src="{{ asset('bundles/filixcaiji/images/iphone.png') }}"></div>
+                <div class="intr">
+                    <h2>免费APP支持</h2>
+                    <p>现在，你可以快速、轻松的监测你的活动和睡眠数据，通过我们的APP上传、分享运动数据，和好友PK，过程简单、轻松、快捷。</p>
+                    <p><strong>立即下载开始我们的健康运动吧</strong></p>
+                    <p><a href="#" class="apple">app store</a><a href="#" class="android">google play</a></p>
+                    <p style="padding-top:15px"><strong>提示：安卓版本支持android 4.3、蓝牙4.0 以上版本,分辨率支持1920*1080 1280*720</strong><br>已测试机型：三星s4、Galaxy note 3 、Galaxy note 2、小米 2S</p>  
+                    <p><a href="#" style="font-size:26px"><strong>同步软件下载</strong></a></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="foot bg_red">
+            <div class="text w_990 bg_red">
+                <div class="follow">
+                    <a class="sina" href="#">微博</a>
+                    <a class="qq" href="#">腾讯微博</a>
+                    <a class="wx" href="#">微信</a>
+                </div>
+                <div class="intr">
+                    <span class="pic"><img src="images/img_1.gif"></span>
+                    <span class="txt">深圳市微运动信息科技有限公司致力于可穿戴设备的研发及制造，凭借团队积累多年的软硬件开发经验及深刻了解用户需求，公司率先推出基于蓝牙4.0的无线智能手环，并开发了与硬件同步数据的智能手机应用，从而实现了硬件与移动互联网的结合。</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="foot_2 bg_gray">
+            <div class="text w_990 bg_gray">
+                <div class="info">
+                    <p>Copyright © www.vidonn.com&nbsp;&nbsp;粤ICP备13047486号-1</p>
+                    <p>电话：755-33029885</p>
+                    <p>客服：400-065-8805</p><p>邮箱：<a href="mailto:xxx@pajk.cn">xxxx@pajk.com</a></p>
+                </div>
+                <div class="link">
+                    <ul>
+                        <li><a href="product.html">产品</a></li>
+                        <li><a href="download.html">手机软件下载</a></li>
+                        <li><a href="download_pc.html">同步软件下载</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="service.html">保修政策</a></li>
+                        <li><a href="FAQ.html">常见问题</a></li>
+                        <li><a href="index.html">网站地图</a></li>
+                    </ul>
+                    <ul>
+                        <li><a href="about.html">关于我们</a></li>
+                        <li><a href="business.html">商务合作</a></li>
+                        <li><a href="terms.html">使用条款</a></li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        {% endblock %}
+    </body>
+</html>
