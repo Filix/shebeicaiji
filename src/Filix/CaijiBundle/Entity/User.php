@@ -18,6 +18,43 @@ class User extends BaseUser
      * @ORM\GeneratedValue(strategy="AUTO")
      */
     protected $id;
+    
+    /**
+     *
+     * @ORM\Column(type="smallint")
+     */
+    protected $sex = 0;
+    
+    /**
+     * @ORM\Column(type="date")
+     */
+    protected $birthday;
+    
+    /**
+     * @ORM\Column(type="float")
+     */
+    protected $weight;
+    
+    /**
+     * @ORM\Column(type="float")
+     */
+    protected $height;
+    
+    /**
+     * @ORM\Column(type="integer")
+     */
+    protected $goal;
+    
+    /**
+     * @ORM\Column(type="string", length=32)
+     */
+    protected $token;
+    
+    /**
+     * @ORM\Column(type="float")
+     */
+    protected $step_length;
+
 
     /**
      * @ORM\OneToMany(targetEntity="Log", mappedBy="user")
@@ -29,6 +66,7 @@ class User extends BaseUser
     {
         parent::__construct();
         $this->logs = new ArrayCollection();
+        $this->token = md5(time()+  rand(100000, 999999) + "user_token");
     }
     
     /**
@@ -74,5 +112,167 @@ class User extends BaseUser
     public function getLogs()
     {
         return $this->logs;
+    }
+    
+
+    /**
+     * Set sex
+     *
+     * @param integer $sex
+     * @return User
+     */
+    public function setSex($sex)
+    {
+        $this->sex = $sex;
+
+        return $this;
+    }
+
+    /**
+     * Get sex
+     *
+     * @return integer 
+     */
+    public function getSex()
+    {
+        return $this->sex;
+    }
+
+    /**
+     * Set birthday
+     *
+     * @param \DateTime $birthday
+     * @return User
+     */
+    public function setBirthday(\DateTime $birthday)
+    {
+        $this->birthday = $birthday;
+
+        return $this;
+    }
+
+    /**
+     * Get birthday
+     *
+     * @return \DateTime 
+     */
+    public function getBirthday()
+    {
+        return $this->birthday;
+    }
+
+    /**
+     * Set weight
+     *
+     * @param float $weight
+     * @return User
+     */
+    public function setWeight($weight)
+    {
+        $this->weight = $weight;
+
+        return $this;
+    }
+
+    /**
+     * Get weight
+     *
+     * @return float 
+     */
+    public function getWeight()
+    {
+        return $this->weight;
+    }
+
+    /**
+     * Set height
+     *
+     * @param float $height
+     * @return User
+     */
+    public function setHeight($height)
+    {
+        $this->height = $height;
+
+        return $this;
+    }
+
+    /**
+     * Get height
+     *
+     * @return float 
+     */
+    public function getHeight()
+    {
+        return $this->height;
+    }
+
+    /**
+     * Set goal
+     *
+     * @param integer $goal
+     * @return User
+     */
+    public function setGoal($goal)
+    {
+        $this->goal = $goal;
+
+        return $this;
+    }
+
+    /**
+     * Get goal
+     *
+     * @return integer 
+     */
+    public function getGoal()
+    {
+        return $this->goal;
+    }
+
+    /**
+     * Set token
+     *
+     * @param string $token
+     * @return User
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
+
+        return $this;
+    }
+
+    /**
+     * Get token
+     *
+     * @return string 
+     */
+    public function getToken()
+    {
+        return $this->token;
+    }
+
+    /**
+     * Set step_length
+     *
+     * @param float $stepLength
+     * @return User
+     */
+    public function setStepLength($stepLength)
+    {
+        $this->step_length = $stepLength;
+
+        return $this;
+    }
+
+    /**
+     * Get step_length
+     *
+     * @return float 
+     */
+    public function getStepLength()
+    {
+        return $this->step_length;
     }
 }

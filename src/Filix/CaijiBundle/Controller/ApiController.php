@@ -88,6 +88,73 @@ class ApiController extends Controller
             'has_next' => $next
         ));
     }
+    
+     /**
+     * 登录
+     * @Route("/passport/register", name="passport_register")
+     * @Method({"POST"})
+     * @ApiDoc(
+     *  section="Api Passport",
+     *  description="register",
+     *  filters={
+     *      {"name"="name", "desc"="name", "type"="string"},
+     *      {"name"="email", "desc"="email", "type"="string"},
+     *      {"name"="password", "desc"="password", "type"="string"},
+     *      {"name"="password2", "desc"="password2", "type"="string"},
+     *      {"name"="sex", "desc"="sex", "type"="int, 1male 2female"},
+     *      {"name"="birthday", "desc"="birthday", "type"="string, 1988-01-20"},
+     *      {"name"="weight", "desc"="weight", "type"="double, 120.0"},
+     *      {"name"="height", "desc"="height", "type"="double, 180.0"},
+     *      {"name"="goal", "desc"="goal", "type"="int"},
+     *      {"name"="step_length", "desc"="step_length", "type"="double, 0.5"}, 
+     * }
+     * )
+     */
+    public function registerAction(){
+        $um = $this->get('fos_user.user_manager');
+        $name = trim($this->getRequest()->get("name"));
+        $email = trim($this->getRequest()->get("email"));
+        $password = trim($this->getRequest()->get("password"));
+        $password2 = trim($this->getRequest()->get("password2"));
+        $sex = trim($this->getRequest()->get("sex"));
+        $birthday = trim($this->getRequest()->get("birthday"));
+        $weight = trim($this->getRequest()->get("weight"));
+        $height = trim($this->getRequest()->get("height"));
+        $goal = trim($this->getRequest()->get("goal"));
+        $step_length = trim($this->getRequest()->get("step_length"));
+        
+        if(!$name || !$email || !$password || !$password2 || !$birthday || !$weight || !$height || !$goal || !$step_length){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '所有项必填'));
+        }
+        if($um->findUserByUsername($name)){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户名已存在'));
+        }
+        if($um->findUserByEmail($email)){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => 'email已存在'));
+        }
+        if($password != $password2){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '两次密码不一致'));
+        }
+        $user = $um->createUser();
+        $user->setUsername($name);
+        $user->setEmail($email);
+        $user->setPlainPassword($password);
+        $user->setSex($sex);
+        $date = explode("-", $birthday);
+        $datetime = new \DateTime();
+        $user->setBirthday($datetime->setDate($date[0], $date[1], $date[2]));
+        $user->setWeight($weight);
+        $user->setHeight($height);
+        $user->setGoal($goal);
+        $user->setStepLength($step_length);
+        $user->setEnabled(true);
+        $um->updateUser($user);
+        return new JsonResponse(array(
+                'code' => self::SUCCESS_CODE,
+                'msg' => '注册成功',
+                'data' => $this->formatUser($user),
+            ));
+    }
 
     /**
      * 登录
@@ -155,7 +222,14 @@ class ApiController extends Controller
         return array(
             'id' => $user->getId(),
             'username' => $user->getUsername(),
-            'email' => $user->getEmail()
+            'email' => $user->getEmail(),
+            'sex' => $user->getSex(),
+            'birthday' => $user->getBirthday()->format('Y-m-d'),
+            'weight' => $user->getWeight(),
+            'height' => $user->getHeight(),
+            'goal' => $user->getGoal(),
+            'token' => $user->getToken(),
+            'step_length' => $user->getStepLength()
         );
     }
 
