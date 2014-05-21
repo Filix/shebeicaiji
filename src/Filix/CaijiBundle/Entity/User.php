@@ -54,6 +54,11 @@ class User extends BaseUser
      * @ORM\Column(type="float")
      */
     protected $step_length;
+    
+    /**
+     * @ORM\Column(type="string")
+     */
+    protected $avatar;
 
 
     /**
@@ -274,5 +279,28 @@ class User extends BaseUser
     public function getStepLength()
     {
         return $this->step_length;
+    }
+
+    /**
+     * Set avatar
+     *
+     * @param string $avatar
+     * @return User
+     */
+    public function setAvatar($avatar)
+    {
+        $this->avatar = $avatar;
+
+        return $this;
+    }
+
+    /**
+     * Get avatar
+     *
+     * @return string 
+     */
+    public function getAvatar()
+    {
+        return $this->avatar;
     }
 }

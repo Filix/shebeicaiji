@@ -79,3 +79,6 @@ fos_user:
             enabled:    false
             
 nelmio_api_doc: ~
+
+parameters:
+    image_upload_dir:  "%kernel.root_dir%/../web/uploads/"

@@ -25,9 +25,16 @@ class Log
     protected $data;
     
     /**
+     * 设备采集时间，客户端上传
      * @ORM\Column(type="datetime", nullable=true)
      */
     protected $created_at;
+    
+    /**
+     * 数据上传时间
+     * @ORM\Column(type="datetime", nullable=true)
+     */
+    protected $uploaded_at;
 
 
     /**
@@ -38,7 +45,7 @@ class Log
     
     public function __construct()
     {
-        $this->created_at = new \DateTime();
+        $this->uploaded_at = new \DateTime();
     }
     
     /**
@@ -118,5 +125,28 @@ class Log
     public function getCreatedAt()
     {
         return $this->created_at;
+    }
+
+    /**
+     * Set uploaded_at
+     *
+     * @param \DateTime $uploadedAt
+     * @return Log
+     */
+    public function setUploadedAt($uploadedAt)
+    {
+        $this->uploaded_at = $uploadedAt;
+
+        return $this;
+    }
+
+    /**
+     * Get uploaded_at
+     *
+     * @return \DateTime 
+     */
+    public function getUploadedAt()
+    {
+        return $this->uploaded_at;
     }
 }

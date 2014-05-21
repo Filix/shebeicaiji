@@ -24,21 +24,25 @@ class ApiController extends Controller
      *  section="Api Data",
      *  description="add feed",
      *  filters={
-     *      {"name"="uid", "desc"="user id"},
-     *      {"name"="data", "desc"="data"}
+     *      {"name"="token", "desc"="user token"},
+     *      {"name"="data", "desc"="data"},
+     *      {"name"="created_at", "desc"="created time"},
      * }
      * )
      */
     public function addAction()
     {
-        $uid = $this->getRequest()->get("uid");
+        $token = $this->getRequest()->get("token");
         $data = $this->getRequest()->get('data');
-        if (!$user = $this->getUserRepository()->find($uid)) {
+        $created_at = $this->getRequest()->get('created_at');
+        if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         $log = new Log();
         $log->setUser($user);
         $log->setData($data);
+        $datetime = new \DateTime();
+        $log->setCreatedAt($datetime->setTimestamp(strtotime($created_at)));
         $this->getDoctrineManager()->persist($log);
         $this->getDoctrineManager()->flush();
         return new JsonResponse(array(
@@ -56,36 +60,73 @@ class ApiController extends Controller
      *  section="Api Data",
      *  description="data list",
      *  filters={
-     *      {"name"="uid", "desc"="user id"},
-     *      {"name"="offset", "desc"="offset"},
-     *      {"name"="limit", "desc"="limit"}
+     *      {"name"="token", "desc"="user token"},
+     *      {"name"="date", "desc"="begin date", "type"="string, 2014-05-10", "default"="today"},
+     *      {"name"="days", "desc"="days", "type"="int, 1", "default"="1"}
      * }
      * )
      */
     public function listAction()
     {
-        $uid = $this->getRequest()->get("uid");
-        $offset = $this->getRequest()->get("offset", 0);
-        $limit = $this->getRequest()->get("limit", 10);
-        $limit++;
-        if (!$user = $this->getUserRepository()->find($uid)) {
+        $token = $this->getRequest()->get("token");
+        $date = $this->getRequest()->get("date", date('Y-m-d'));
+        $days = $this->getRequest()->get("days", 1);
+        if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
-        $logs = $this->getLogRepository()->getUserLogs($user, $offset, $limit);
+        $logs = $this->getLogRepository()->getUserLogs($user, $date, $days);
         $t = array();
         foreach ($logs as $log) {
             $t[] = $this->formatLog($log);
-        }
-        $next = false;
-        if (count($t) >= $limit) {
-            $next = true;
-            unset($t[$limit - 1]);
         }
         return new JsonResponse(array(
             'code' => self::SUCCESS_CODE,
             'msg' => '获取成功',
             'data' => $t,
-            'has_next' => $next
+        ));
+    }
+    
+    /**
+     * 获取记录
+     * @Route("/user/avatar", name="user_avatar")
+     * @Method({"POST"})
+     * @ApiDoc(
+     *  section="Api Data",
+     *  description="data list",
+     *  filters={
+     *      {"name"="token", "desc"="user token"},
+     *      {"name"="avatar", "desc"="avatar image", "type"="file"}
+     * }
+     * )
+     */
+    public function avatarAction()
+    {
+        $token = $this->getRequest()->get("token");
+        if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
+        }
+        $avatar = $this->getRequest()->files->get('avatar');
+        if($avatar == null){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '未选择图片'));
+        }
+        $localpath = $this->container->getParameter('image_upload_dir').'avatars/';
+        $filename = md5($user->getId() . time() . rand(10000, 99999)) . 
+                '.' . strtolower(trim(substr(strrchr($avatar->getClientOriginalName(), '.'), 1, 10)));
+        try{
+            $fs = new \Symfony\Component\Filesystem\Filesystem();
+            $fs->mkdir($localpath);
+            $avatar->move($localpath, $filename);
+            $user->setAvatar($filename);
+            $dm = $this->getDoctrineManager();
+            $dm->persist($user);
+            $dm->flush();
+        }catch(Exception $e){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '上传图片失败'));
+        }
+        return new JsonResponse(array(
+            'code' => self::SUCCESS_CODE,
+            'msg' => '上传成功成功',
+            'data' => 'http://' . $this->getRequest()->server->get('HTTP_HOST') . '/uploads/avatars/' . $filename
         ));
     }
     
@@ -213,7 +254,7 @@ class ApiController extends Controller
         return array(
             'id' => $log->getId(),
             'data' => $log->getData(),
-            'time' => $log->getCreatedAt()->format("Y-m-d H:i:s")
+            'created_at' => $log->getCreatedAt()->format("Y-m-d H:i:s")
         );
     }
     
@@ -229,7 +270,8 @@ class ApiController extends Controller
             'height' => $user->getHeight(),
             'goal' => $user->getGoal(),
             'token' => $user->getToken(),
-            'step_length' => $user->getStepLength()
+            'step_length' => $user->getStepLength(),
+            'avatar' => 'http://' . $this->getRequest()->server->get('HTTP_HOST') . '/uploads/avatars/' . $user->getAvatar(),
         );
     }
 

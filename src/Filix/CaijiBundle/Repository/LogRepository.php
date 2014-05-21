@@ -13,17 +13,21 @@ use Filix\CaijiBundle\Entity\User;
  */
 class LogRepository extends EntityRepository
 {
-    public function getUserLogs(User $user, $offset, $limit){
+    public function getUserLogs(User $user, $begin_day, $days){
+        $time_begin = $begin_day. " 00:00:00";
+        $time_end = date('Y-m-d H:i:s', strtotime($time_begin) + 24*3600*$days - 1);
         return $this->getEntityManager()
                         ->createQueryBuilder()
                         ->select('l')
                         ->from('FilixCaijiBundle:Log', 'l')
                         ->where('l.user = :user')
-                        ->setFirstResult($offset)
-                        ->setMaxResults($limit)
+                        ->andWhere("l.created_at >= :time_begin")
+                        ->andWhere("l.created_at <= :time_end")
                         ->orderBy('l.created_at', 'desc')
                         ->getQuery()
                         ->setParameter('user', $user)
+                        ->setParameter('time_begin', $time_begin)
+                        ->setParameter('time_end', $time_end)
                         ->getResult();
     }
 }
