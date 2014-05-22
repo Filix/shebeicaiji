@@ -141,7 +141,6 @@ class ApiController extends Controller
      *      {"name"="name", "desc"="name", "type"="string"},
      *      {"name"="email", "desc"="email", "type"="string"},
      *      {"name"="password", "desc"="password", "type"="string"},
-     *      {"name"="password2", "desc"="password2", "type"="string"},
      *      {"name"="sex", "desc"="sex", "type"="int, 1male 2female"},
      *      {"name"="birthday", "desc"="birthday", "type"="string, 1988-01-20"},
      *      {"name"="weight", "desc"="weight", "type"="double, 120.0"},
@@ -156,7 +155,6 @@ class ApiController extends Controller
         $name = trim($this->getRequest()->get("name"));
         $email = trim($this->getRequest()->get("email"));
         $password = trim($this->getRequest()->get("password"));
-        $password2 = trim($this->getRequest()->get("password2"));
         $sex = trim($this->getRequest()->get("sex"));
         $birthday = trim($this->getRequest()->get("birthday"));
         $weight = trim($this->getRequest()->get("weight"));
@@ -164,7 +162,7 @@ class ApiController extends Controller
         $goal = trim($this->getRequest()->get("goal"));
         $step_length = trim($this->getRequest()->get("step_length"));
         
-        if(!$name || !$email || !$password || !$password2 || !$birthday || !$weight || !$height || !$goal || !$step_length){
+        if(!$name || !$email || !$password || !$birthday || !$weight || !$height || !$goal || !$step_length){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '所有项必填'));
         }
         if($um->findUserByUsername($name)){
@@ -173,15 +171,16 @@ class ApiController extends Controller
         if($um->findUserByEmail($email)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => 'email已存在'));
         }
-        if($password != $password2){
-            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '两次密码不一致'));
+        $date = array_filter(explode("-", $birthday));
+        if(count($date) != 3){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '生日格式错误'));
         }
+        
         $user = $um->createUser();
         $user->setUsername($name);
         $user->setEmail($email);
         $user->setPlainPassword($password);
         $user->setSex($sex);
-        $date = explode("-", $birthday);
         $datetime = new \DateTime();
         $user->setBirthday($datetime->setDate($date[0], $date[1], $date[2]));
         $user->setWeight($weight);
