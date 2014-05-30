@@ -13,9 +13,8 @@ use Filix\CaijiBundle\Entity\User;
  */
 class LogRepository extends EntityRepository
 {
-    public function getUserLogs(User $user, $begin_day, $days){
-        $time_begin = $begin_day. " 00:00:00";
-        $time_end = date('Y-m-d H:i:s', strtotime($time_begin) + 24*3600*$days - 1);
+    public function getUserLogs(User $user, $begin_day, $end_day){
+        //echo sprintf('%s ----- %s', $begin_day, $end_day);
         return $this->getEntityManager()
                         ->createQueryBuilder()
                         ->select('l')
@@ -23,11 +22,25 @@ class LogRepository extends EntityRepository
                         ->where('l.user = :user')
                         ->andWhere("l.created_at >= :time_begin")
                         ->andWhere("l.created_at <= :time_end")
-                        ->orderBy('l.created_at', 'desc')
+                        ->orderBy('l.created_at', 'asc')
                         ->getQuery()
                         ->setParameter('user', $user)
-                        ->setParameter('time_begin', $time_begin)
-                        ->setParameter('time_end', $time_end)
+                        ->setParameter('time_begin', $begin_day)
+                        ->setParameter('time_end', $end_day)
+                        ->getResult();
+    }
+    
+    public function getLog($user, $time){
+        return $this->getEntityManager()
+                        ->createQueryBuilder()
+                        ->select('l')
+                        ->from('FilixCaijiBundle:Log', 'l')
+                        ->where('l.user = :user')
+                        ->andWhere("l.created_at = :time")
+//                        ->setMaxResults(1)
+                        ->getQuery()
+                        ->setParameter('user', $user)
+                        ->setParameter('time', $time)
                         ->getResult();
     }
 }

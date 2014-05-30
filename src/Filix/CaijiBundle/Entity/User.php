@@ -20,28 +20,33 @@ class User extends BaseUser
     protected $id;
     
     /**
+     * @ORM\Column(type="string", length=20, nullable=true)
+     */
+    protected $nickname;
+
+    /**
      *
-     * @ORM\Column(type="smallint")
+     * @ORM\Column(type="smallint", nullable=true)
      */
     protected $sex = 0;
     
     /**
-     * @ORM\Column(type="date")
+     * @ORM\Column(type="date", nullable=true)
      */
     protected $birthday;
     
     /**
-     * @ORM\Column(type="float")
+     * @ORM\Column(type="float", nullable=true)
      */
     protected $weight;
     
     /**
-     * @ORM\Column(type="float")
+     * @ORM\Column(type="float", nullable=true)
      */
     protected $height;
     
     /**
-     * @ORM\Column(type="integer")
+     * @ORM\Column(type="integer", nullable=true)
      */
     protected $goal;
     
@@ -51,7 +56,7 @@ class User extends BaseUser
     protected $token;
     
     /**
-     * @ORM\Column(type="float")
+     * @ORM\Column(type="float", nullable=true)
      */
     protected $step_length;
     
@@ -84,6 +89,12 @@ class User extends BaseUser
         return $this->id;
     }
     
+    
+    public function setEmail($email)
+    {
+        parent::setEmail($email);
+        $this->setUsername($email);
+    }
     
 
     /**
@@ -302,5 +313,28 @@ class User extends BaseUser
     public function getAvatar()
     {
         return $this->avatar;
+    }
+
+    /**
+     * Set nickname
+     *
+     * @param string $nickname
+     * @return User
+     */
+    public function setNickname($nickname)
+    {
+        $this->nickname = $nickname;
+
+        return $this;
+    }
+
+    /**
+     * Get nickname
+     *
+     * @return string 
+     */
+    public function getNickname()
+    {
+        return $this->nickname;
     }
 }
