@@ -240,7 +240,7 @@ class ApiController extends Controller
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_year", "desc"="begin year", "type"="string, 2010"},
-     *      {"name"="end_month", "desc"="end day", "type"="string, 2014"}
+     *      {"name"="end_year", "desc"="end year", "type"="string, 2014"}
      * }
      * )
      */
@@ -251,9 +251,7 @@ class ApiController extends Controller
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         $begin_year = $this->getRequest()->get("begin_year");
-        $begin_year = 2010;
         $end_year = $this->getRequest()->get("end_year");
-        $end_year = 2014;
         if(!preg_match('/^\d{4}$/', $begin_year) || !preg_match('/^\d{4}$/', $end_year)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
@@ -296,11 +294,11 @@ class ApiController extends Controller
      * @Method({"POST"})
      * @ApiDoc(
      *  section="Api User",
-     *  description="data list",
+     *  description="user info",
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="name", "desc"="name", "type"="string"},
-     *      {"name"="avatar", "desc"="avatar image", "type"="file"},
+     *      {"name"="avatar", "desc"="avatar image", "type"="file"， "required"=false},
      *      {"name"="sex", "desc"="sex", "type"="int, 1male 2female"},
      *      {"name"="birthday", "desc"="birthday", "type"="string, 1988-01-20"},
      *      {"name"="weight", "desc"="weight", "type"="double, 120.0"},
@@ -349,6 +347,54 @@ class ApiController extends Controller
         $user->setHeight($height);
         $user->setGoal($goal);
         $user->setStepLength($step_length);
+        try{
+            $dm = $this->getDoctrineManager();
+            $dm->persist($user);
+            $dm->flush();
+        }catch(Exception $e){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '更新数据失败'));
+        }
+        return new JsonResponse(array(
+            'code' => self::SUCCESS_CODE,
+            'msg' => '更新数据成功',
+            'data' => $this->formatUser($user)
+        ));
+    }
+    
+    /**
+     * 更新用户头像
+     * @Route("/user/avatar", name="user_avatar")
+     * @Method({"POST"})
+     * @ApiDoc(
+     *  section="Api User",
+     *  description="user info",
+     *  filters={
+     *      {"name"="token", "desc"="user token"},
+     *      {"name"="avatar", "desc"="avatar image", "type"="file"}
+     * )
+     */
+    public function avatarAction()
+    {
+        $token = $this->getRequest()->get("token");
+        if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
+        }
+        $avatar = $this->getRequest()->files->get('avatar');
+        if(!$avatar){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '请选择图片'));
+        }
+        $localpath = $this->container->getParameter('image_upload_dir').'avatars/';
+        $filename = md5($user->getId() . time() . rand(10000, 99999)) . 
+                    '.' . strtolower(trim(substr(strrchr($avatar->getClientOriginalName(), '.'), 1, 10)));
+        try{
+            $fs = new \Symfony\Component\Filesystem\Filesystem();
+            $fs->mkdir($localpath);
+            $avatar->move($localpath, $filename);
+            $user->setAvatar($filename);
+        }catch(Exception $e){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '上传图片失败'));
+        }
+        
         try{
             $dm = $this->getDoctrineManager();
             $dm->persist($user);
@@ -463,7 +509,7 @@ class ApiController extends Controller
     {
         return array(
             'id' => $user->getId(),
-            'username' => $user->getUsername(),
+            'username' => $user->getNickname(),
             'email' => $user->getEmail(),
             'sex' => $user->getSex(),
             'birthday' => $user->getBirthday() ? $user->getBirthday()->format('Y-m-d') : '',
