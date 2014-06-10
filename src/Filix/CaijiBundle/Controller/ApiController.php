@@ -298,13 +298,13 @@ class ApiController extends Controller
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="name", "desc"="name", "type"="string"},
-     *      {"name"="avatar", "desc"="avatar image", "type"="file"， "required"=false},
+     *      {"name"="avatar", "desc"="avatar image", "type"="file", "required"="false"},
      *      {"name"="sex", "desc"="sex", "type"="int, 1male 2female"},
      *      {"name"="birthday", "desc"="birthday", "type"="string, 1988-01-20"},
      *      {"name"="weight", "desc"="weight", "type"="double, 120.0"},
      *      {"name"="height", "desc"="height", "type"="double, 180.0"},
      *      {"name"="goal", "desc"="goal", "type"="int"},
-     *      {"name"="step_length", "desc"="step_length", "type"="double, 0.5"}, 
+     *      {"name"="step_length", "desc"="step_length", "type"="double, 0.5"}
      * }
      * )
      */
@@ -371,6 +371,7 @@ class ApiController extends Controller
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="avatar", "desc"="avatar image", "type"="file"}
+     *  }
      * )
      */
     public function avatarAction()
