@@ -46,14 +46,14 @@ class ApiController extends Controller
             $hour = $d['time'] - $d['time'] % 3600; //没小时存一条数据，时间取0分0秒
             if(!in_array($hour, $tmp)){
                 $tmp[] = $hour;
-                if(!$l = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $hour))){
+                if(!$log = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $hour))){
                     $log = new Log();
                     $log->setUser($user);
-                    $log->setData(json_encode($d['data']));
                     $datetime = new \DateTime();
                     $log->setCreatedAt($datetime->setTimestamp($hour));
-                    $this->getDoctrineManager()->persist($log);
                 }
+                $log->setData(json_encode($d['data']));
+                $this->getDoctrineManager()->persist($log);
             }
             
         }
