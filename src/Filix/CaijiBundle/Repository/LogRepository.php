@@ -37,7 +37,7 @@ class LogRepository extends EntityRepository
                         ->from('FilixCaijiBundle:Log', 'l')
                         ->where('l.user = :user')
                         ->andWhere("l.created_at = :time")
-//                        ->setMaxResults(1)
+                        ->setMaxResults(1)
                         ->getQuery()
                         ->setParameter('user', $user)
                         ->setParameter('time', $time)

@@ -381,7 +381,7 @@ class ApiController extends Controller
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         $avatar = $this->getRequest()->files->get('avatar');
-        if(!$avatar){
+        if(!$avatar instanceof \Symfony\Component\HttpFoundation\File\UploadedFile){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '请选择图片'));
         }
         $localpath = $this->container->getParameter('image_upload_dir').'avatars/';
