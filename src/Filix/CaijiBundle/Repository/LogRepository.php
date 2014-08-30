@@ -43,4 +43,18 @@ class LogRepository extends EntityRepository
                         ->setParameter('time', $time)
                         ->getResult();
     }
+    
+    public function getLogsBeforeToday($user){
+        $time = date('Y-m-d 00:00:00');
+        return $this->getEntityManager()
+                        ->createQueryBuilder()
+                        ->select('l')
+                        ->from('FilixCaijiBundle:Log', 'l')
+                        ->where('l.user = :user')
+                        ->andWhere("l.created_at < :time")
+                        ->getQuery()
+                        ->setParameter('user', $user)
+                        ->setParameter('time', $time)
+                        ->getResult();
+    }
 }

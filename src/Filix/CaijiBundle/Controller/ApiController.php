@@ -40,10 +40,9 @@ class ApiController extends Controller
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => 'data不能为空'));
         }
         $datas = json_decode($data, true);
-        $created_at = $this->getRequest()->get('created_at');
         $tmp = array();
         foreach ($datas as $d) {
-            $hour = $d['time'] - $d['time'] % 3600; //没小时存一条数据，时间取0分0秒
+            $hour = $d['time'] - $d['time'] % 3600; //每小时存一条数据，时间取0分0秒
             if(!in_array($hour, $tmp)){
                 $tmp[] = $hour;
 		$log = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $hour));
@@ -69,6 +68,7 @@ class ApiController extends Controller
         return new JsonResponse(array(
             'code' => self::SUCCESS_CODE,
             'msg' => '添加成功',
+            'data' => array('statistics' => $this->getLogsBeforeToday($user))
 //            'data' => $this->formatLog($log)
         ));
     }
@@ -478,7 +478,10 @@ class ApiController extends Controller
             $response = new JsonResponse(array(
                 'code' => self::SUCCESS_CODE,
                 'msg' => '登录成功',
-                'data' => $this->formatUser($user),
+                'data' => array_merge(
+                            $this->formatUser($user), 
+                            array('statistics' => $this->getLogsBeforeToday($user))
+                        ),
             ));
             $this->login($user, $response);
 
@@ -504,6 +507,21 @@ class ApiController extends Controller
                 ->encodePassword($password, $user->getSalt());
     }
     
+    protected function getLogsBeforeToday(User $user){
+        $logs = $this->getLogRepository()->getLogsBeforeToday($user);
+        $s = array('steps' => 0, 'distance' => 0, 'calorie' => 0);
+        if($logs){
+            foreach($logs as $log){
+                $t = json_decode($log->getData(), true);
+                $s['steps'] += $t['steps'];
+                $s['distance'] += $t['distance'];
+                $s['calorie'] += $t['calorie'];
+            }
+        }
+        return $s;
+    }
+
+
     protected function formatLog(Log $log)
     {
         return json_decode($log->getData(), true);
