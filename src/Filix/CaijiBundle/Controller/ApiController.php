@@ -100,9 +100,20 @@ class ApiController extends Controller
         }
         $logs = $this->getLogRepository()->getUserLogs($user, $begin_day . ' 00:00:00', $end_day . ' 23:59:59');
         $t = array();
+        $flags = array();
+        foreach($logs as $log){
+            $d = $this->formatLog($log);
+            if(in_array('distance', $d) && $d['distance'] >0){
+                $key = date('Y-m-d', $log->getCreatedAt()->getTimestamp()); 
+                $flags[$key] = $d['distance'];
+            }
+        }
+        
         foreach ($logs as $log) {
             $t[] = array('time' => $log->getCreatedAt()->getTimestamp(),
-                'data' => $this->formatLog($log));
+//                'data' => $this->formatLog($log),
+                'data' => $this->formatLog2($log, $flags)
+                    );
         }
         return new JsonResponse(array(
             'code' => self::SUCCESS_CODE,
@@ -525,6 +536,16 @@ class ApiController extends Controller
     protected function formatLog(Log $log)
     {
         return json_decode($log->getData(), true);
+    }
+    
+    protected function formatLog2(Log $log, Array $flags)
+    {
+        $day = date('Y-m-d', $log->getCreatedAt()->getTimestamp()); 
+        $d = json_decode($log->getData(), true);
+        if(in_array($day, $flags)){
+            $d['distance'] = $flags[$day];
+        }
+        return $d;
     }
     
     protected function formatUser(User $user)
