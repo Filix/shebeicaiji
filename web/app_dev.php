@@ -1,5 +1,5 @@
 <?php
-
+date_default_timezone_set("Asia/Shanghai");
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Debug\Debug;
 

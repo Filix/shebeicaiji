@@ -36,35 +36,34 @@ class ApiController extends Controller
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         $data = $this->getRequest()->get('data');
-        if(!trim($data)){
+        if (!trim($data)) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => 'data不能为空'));
         }
         $datas = json_decode($data, true);
         $tmp = array();
         foreach ($datas as $d) {
             $hour = $d['time'] - $d['time'] % 3600; //每小时存一条数据，时间取0分0秒
-            if(!in_array($hour, $tmp)){
+            if (!in_array($hour, $tmp)) {
                 $tmp[] = $hour;
-		$log = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $hour));
-                if(!$log){
+                $log = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $hour));
+                if (!$log) {
                     $log = new Log();
                     $log->setUser($user);
                     $datetime = new \DateTime();
                     $log->setCreatedAt($datetime->setTimestamp($hour));
-                }else{
-		   $log = $log[0];
-		}
+                } else {
+                    $log = $log[0];
+                }
                 $log->setData(json_encode($d['data']));
                 $this->getDoctrineManager()->persist($log);
             }
-            
         }
-        try{
+        try {
             $this->getDoctrineManager()->flush();
         } catch (Exception $ex) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '添加失败'));
         }
-        
+
         return new JsonResponse(array(
             'code' => self::SUCCESS_CODE,
             'msg' => '添加成功',
@@ -95,25 +94,25 @@ class ApiController extends Controller
         if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
-        if(!preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $begin_day) || !preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $end_day)){
+        if (!preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $begin_day) || !preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $end_day)) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
         $logs = $this->getLogRepository()->getUserLogs($user, $begin_day . ' 00:00:00', $end_day . ' 23:59:59');
         $t = array();
         $flags = array();
-        foreach($logs as $log){
+        foreach ($logs as $log) {
             $d = $this->formatLog($log);
-            if(in_array('distance', $d) && $d['distance'] >0){
-                $key = date('Y-m-d', $log->getCreatedAt()->getTimestamp()); 
+            if (in_array('distance', $d) && $d['distance'] > 0) {
+                $key = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
                 $flags[$key] = $d['distance'];
             }
         }
-        
+
         foreach ($logs as $log) {
             $t[] = array('time' => $log->getCreatedAt()->getTimestamp(),
 //                'data' => $this->formatLog($log),
                 'data' => $this->formatLog2($log, $flags)
-                    );
+            );
         }
         return new JsonResponse(array(
             'code' => self::SUCCESS_CODE,
@@ -121,11 +120,11 @@ class ApiController extends Controller
             'data' => $t,
         ));
     }
-    
+
     /**
      * 根据week获取记录
      * @Route("/data/list/week", name="log_list_week")
-     * @Method({"POST"})
+     * @Method({"POST", "GET"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
@@ -144,29 +143,36 @@ class ApiController extends Controller
         if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
-        if(!preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $begin_day) || !preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $end_day)){
+        if (!preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $begin_day) || !preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $end_day)) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
         $logs = $this->getLogRepository()->getUserLogs($user, $begin_day . ' 00:00:00', $end_day . ' 23:59:59');
         $tmp = array();
+        $distance_flags = array();
         foreach ($logs as $log) {
             $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
             $d = $this->formatLog($log);
-            if(!isset($tmp[$w])){
+            $distance_flags[$w] = $d['distance'];
+            if (!isset($tmp[$w])) {
                 $tmp[$w] = $d;
-            }else{
-                foreach($tmp[$w] as $key => &$val){
-                   if(is_numeric($val)){
-                       $val += $d[$key];
-                   }
+            } else {
+                foreach ($tmp[$w] as $key => &$val) {
+                    if (is_numeric($val) && $key != 'distance') {
+                        $val += $d[$key];
+                    }
                 }
             }
         }
+
+        foreach ($tmp as $key => &$temp) {
+            $temp['distance'] = $distance_flags[$key];
+        }
+
         $t = array();
-        foreach($tmp as $key => $v){
+        foreach ($tmp as $key => $v) {
             $time = strtotime($key . ' 00:00:00');
             $w = date('Y-W', $time);
-            if(!isset($t[$w])){
+            if (!isset($t[$w])) {
                 $k = date('N', $time);
                 $t[$w]['time'] = date('Y-m-d', $time - (date('N', $time) - 1) * 24 * 3600);
             }
@@ -178,11 +184,11 @@ class ApiController extends Controller
             'data' => array_values($t),
         ));
     }
-    
+
     /**
      * 根据month获取记录
      * @Route("/data/list/month", name="log_list_month")
-     * @Method({"POST"})
+     * @Method({"POST", "get"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
@@ -201,38 +207,45 @@ class ApiController extends Controller
         }
         $begin_month = $this->getRequest()->get("begin_month");
         $end_month = $this->getRequest()->get("end_month");
-        if(!preg_match('/^\d{4}-\d{1,2}$/', $begin_month) || !preg_match('/^\d{4}-\d{1,2}$/', $end_month)){
+        if (!preg_match('/^\d{4}-\d{1,2}$/', $begin_month) || !preg_match('/^\d{4}-\d{1,2}$/', $end_month)) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
         $first_day = $begin_month . '-01 00:00:00';
         list($y, $m) = explode('-', $end_month);
-        if($m == 12){
+        if ($m == 12) {
             $y++;
             $m = 1;
-        }else{
+        } else {
             $m++;
         }
-        $last_day = date('Y-m-d H:i:s', strtotime($y.'-'.$m.'-01 00:00:00') - 1);
+        $last_day = date('Y-m-d H:i:s', strtotime($y . '-' . $m . '-01 00:00:00') - 1);
         $logs = $this->getLogRepository()->getUserLogs($user, $first_day, $last_day);
         $tmp = array();
+        $distance_flag = array();
         foreach ($logs as $log) {
             $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
             $d = $this->formatLog($log);
-            if(!isset($tmp[$w])){
+            $distance_flag[$w] = $d['distance'];
+            if (!isset($tmp[$w])) {
                 $tmp[$w] = $d;
-            }else{
-                foreach($tmp[$w] as $key => &$val){
-                   if(is_numeric($val)){
-                       $val += $d[$key];
-                   }
+            } else {
+                foreach ($tmp[$w] as $key => &$val) {
+                    if (is_numeric($val) && $key != "distance") {
+                        $val += $d[$key];
+                    }
                 }
             }
         }
+        
+        foreach ($tmp as $key => &$temp) {
+            $temp['distance'] = $distance_flag[$key];
+        }
+        
         $t = array();
-        foreach($tmp as $key => $v){
+        foreach ($tmp as $key => $v) {
             $time = strtotime($key . ' 00:00:00');
             $w = date('Y-m', $time);
-            if(!isset($t[$w])){
+            if (!isset($t[$w])) {
                 $t[$w]['time'] = $w;
             }
             $t[$w]['data'][] = array('time' => $key, 'data' => $v);
@@ -243,11 +256,11 @@ class ApiController extends Controller
             'data' => array_values($t),
         ));
     }
-    
+
     /**
      * 根据year获取记录
      * @Route("/data/list/year", name="log_list_year")
-     * @Method({"POST"})
+     * @Method({"POST", "GET"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
@@ -266,31 +279,56 @@ class ApiController extends Controller
         }
         $begin_year = $this->getRequest()->get("begin_year");
         $end_year = $this->getRequest()->get("end_year");
-        if(!preg_match('/^\d{4}$/', $begin_year) || !preg_match('/^\d{4}$/', $end_year)){
+        if (!preg_match('/^\d{4}$/', $begin_year) || !preg_match('/^\d{4}$/', $end_year)) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
         $first_day = $begin_year . '-01-01 00:00:00';
-        $last_day = $end_year.'-12-31 23:59:59';
+        $last_day = $end_year . '-12-31 23:59:59';
         $logs = $this->getLogRepository()->getUserLogs($user, $first_day, $last_day);
         $tmp = array();
+        $distance_flags = array();
+        foreach ($logs as $log) {
+            $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
+            $d = $this->formatLog($log);
+            $distance_flags[$w] = $d['distance'];
+        }
+        $distance_flags_month = array();
+        foreach($distance_flags as $k => $v){
+            $m = substr($k, 0, 7);
+            if(!isset($distance_flags_month[$m])){
+                $distance_flags_month[$m] = $v;
+            }else{
+                $distance_flags_month[$m] += $v;
+            }
+        }
+//        
+//        foreach ($logs as $log) {
+//            $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
+//            $d = $this->formatLog($log);
+//            $d['distance'] = $distance_flags[$w];
+//            $log->setData(json_encode($d));
+//        }
+//        
+        
         foreach ($logs as $log) {
             $w = date('Y-m', $log->getCreatedAt()->getTimestamp());
             $d = $this->formatLog($log);
-            if(!isset($tmp[$w])){
+            $d['distance'] = $distance_flags_month[$w];
+            if (!isset($tmp[$w])) {
                 $tmp[$w] = $d;
-            }else{
-                foreach($tmp[$w] as $key => &$val){
-                   if(is_numeric($val)){
-                       $val += $d[$key];
-                   }
+            } else {
+                foreach ($tmp[$w] as $key => &$val) {
+                    if (is_numeric($val) && $key != "distance") {
+                        $val += $d[$key];
+                    }
                 }
             }
         }
         $t = array();
-        foreach($tmp as $key => $v){
+        foreach ($tmp as $key => $v) {
             $time = strtotime($key . '-01 00:00:00');
             $w = date('Y', $time);
-            if(!isset($t[$w])){
+            if (!isset($t[$w])) {
                 $t[$w]['time'] = $w;
             }
             $t[$w]['data'][] = array('time' => $key, 'data' => $v);
@@ -301,7 +339,7 @@ class ApiController extends Controller
             'data' => array_values($t),
         ));
     }
-    
+
     /**
      * 更新用户信息
      * @Route("/user/profile", name="user_profile")
@@ -337,19 +375,19 @@ class ApiController extends Controller
         $step_length = trim($this->getRequest()->get("step_length"));
         $avatar = $this->getRequest()->files->get('avatar');
         $date = array_filter(explode("-", $birthday));
-        if(count($date) != 3){
+        if (count($date) != 3) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '生日格式错误'));
         }
-        if($avatar != null){
-            $localpath = $this->container->getParameter('image_upload_dir').'avatars/';
-            $filename = md5($user->getId() . time() . rand(10000, 99999)) . 
+        if ($avatar != null) {
+            $localpath = $this->container->getParameter('image_upload_dir') . 'avatars/';
+            $filename = md5($user->getId() . time() . rand(10000, 99999)) .
                     '.' . strtolower(trim(substr(strrchr($avatar->getClientOriginalName(), '.'), 1, 10)));
-            try{
+            try {
                 $fs = new \Symfony\Component\Filesystem\Filesystem();
                 $fs->mkdir($localpath);
                 $avatar->move($localpath, $filename);
                 $user->setAvatar($filename);
-            }catch(Exception $e){
+            } catch (Exception $e) {
                 return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '上传图片失败'));
             }
         }
@@ -361,11 +399,11 @@ class ApiController extends Controller
         $user->setHeight($height);
         $user->setGoal($goal);
         $user->setStepLength($step_length);
-        try{
+        try {
             $dm = $this->getDoctrineManager();
             $dm->persist($user);
             $dm->flush();
-        }catch(Exception $e){
+        } catch (Exception $e) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '更新数据失败'));
         }
         return new JsonResponse(array(
@@ -374,7 +412,7 @@ class ApiController extends Controller
             'data' => $this->formatUser($user)
         ));
     }
-    
+
     /**
      * 更新用户头像
      * @Route("/user/avatar", name="user_avatar")
@@ -395,26 +433,26 @@ class ApiController extends Controller
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         $avatar = $this->getRequest()->files->get('avatar');
-        if(!$avatar instanceof \Symfony\Component\HttpFoundation\File\UploadedFile){
+        if (!$avatar instanceof \Symfony\Component\HttpFoundation\File\UploadedFile) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '请选择图片'));
         }
-        $localpath = $this->container->getParameter('image_upload_dir').'avatars/';
-        $filename = md5($user->getId() . time() . rand(10000, 99999)) . 
-                    '.' . strtolower(trim(substr(strrchr($avatar->getClientOriginalName(), '.'), 1, 10)));
-        try{
+        $localpath = $this->container->getParameter('image_upload_dir') . 'avatars/';
+        $filename = md5($user->getId() . time() . rand(10000, 99999)) .
+                '.' . strtolower(trim(substr(strrchr($avatar->getClientOriginalName(), '.'), 1, 10)));
+        try {
             $fs = new \Symfony\Component\Filesystem\Filesystem();
             $fs->mkdir($localpath);
             $avatar->move($localpath, $filename);
             $user->setAvatar($filename);
-        }catch(Exception $e){
+        } catch (Exception $e) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '上传图片失败'));
         }
-        
-        try{
+
+        try {
             $dm = $this->getDoctrineManager();
             $dm->persist($user);
             $dm->flush();
-        }catch(Exception $e){
+        } catch (Exception $e) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '更新数据失败'));
         }
         return new JsonResponse(array(
@@ -423,8 +461,8 @@ class ApiController extends Controller
             'data' => $this->formatUser($user)
         ));
     }
-    
-     /**
+
+    /**
      * 登录
      * @Route("/passport/register", name="passport_register")
      * @Method({"POST"})
@@ -437,30 +475,31 @@ class ApiController extends Controller
      * }
      * )
      */
-    public function registerAction(){
+    public function registerAction()
+    {
         $um = $this->get('fos_user.user_manager');
         $name = trim($this->getRequest()->get("name"));
         $email = trim($this->getRequest()->get("email"));
         $password = trim($this->getRequest()->get("password"));
-        
-        if(!$email || !$password){
+
+        if (!$email || !$password) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '所有项必填'));
         }
 
-        if($um->findUserByEmail($email)){
+        if ($um->findUserByEmail($email)) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => 'email已存在'));
         }
-      
+
         $user = $um->createUser();
         $user->setEmail($email);
         $user->setPlainPassword($password);
         $user->setEnabled(true);
         $um->updateUser($user);
         return new JsonResponse(array(
-                'code' => self::SUCCESS_CODE,
-                'msg' => '注册成功',
-                'data' => $this->formatUser($user),
-            ));
+            'code' => self::SUCCESS_CODE,
+            'msg' => '注册成功',
+            'data' => $this->formatUser($user),
+        ));
     }
 
     /**
@@ -482,17 +521,16 @@ class ApiController extends Controller
         $password = $this->getRequest()->get("password");
         $user = $this->get('fos_user.user_manager')
                 ->findUserByEmail($email);
-        if(is_null($user))
+        if (is_null($user))
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '账号或密码错误'));
-        
-        if($this->checkPassword($user, $password)){
+
+        if ($this->checkPassword($user, $password)) {
             $response = new JsonResponse(array(
                 'code' => self::SUCCESS_CODE,
                 'msg' => '登录成功',
                 'data' => array_merge(
-                            $this->formatUser($user), 
-                            array('statistics' => $this->getLogsBeforeToday($user))
-                        ),
+                        $this->formatUser($user), array('statistics' => $this->getLogsBeforeToday($user))
+                ),
             ));
             $this->login($user, $response);
 
@@ -501,28 +539,29 @@ class ApiController extends Controller
 
         return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '账号或密码错误'));
     }
-    
-    private function login($user, $response = null){
+
+    private function login($user, $response = null)
+    {
         $this->get('fos_user.security.login_manager')
                 ->loginUser(
-                    $this->container->getParameter('fos_user.firewall_name'),
-                    $user,
-                    $response
-                );
+                        $this->container->getParameter('fos_user.firewall_name'), $user, $response
+        );
     }
 
-    private function checkPassword($user, $password){
+    private function checkPassword($user, $password)
+    {
         return $user->getPassword() === $this->container
-                ->get('security.encoder_factory')
-                ->getEncoder($user)
-                ->encodePassword($password, $user->getSalt());
+                        ->get('security.encoder_factory')
+                        ->getEncoder($user)
+                        ->encodePassword($password, $user->getSalt());
     }
-    
-    protected function getLogsBeforeToday(User $user){
+
+    protected function getLogsBeforeToday(User $user)
+    {
         $logs = $this->getLogRepository()->getLogsBeforeToday($user);
         $s = array('steps' => 0, 'distance' => 0, 'calorie' => 0);
-        if($logs){
-            foreach($logs as $log){
+        if ($logs) {
+            foreach ($logs as $log) {
                 $t = json_decode($log->getData(), true);
                 $s['steps'] += $t['steps'];
                 $s['distance'] += $t['distance'];
@@ -532,22 +571,21 @@ class ApiController extends Controller
         return $s;
     }
 
-
     protected function formatLog(Log $log)
     {
         return json_decode($log->getData(), true);
     }
-    
+
     protected function formatLog2(Log $log, Array $flags)
     {
-        $day = date('Y-m-d', $log->getCreatedAt()->getTimestamp()); 
+        $day = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
         $d = json_decode($log->getData(), true);
-        if(in_array($day, $flags)){
+        if (in_array($day, $flags)) {
             $d['distance'] = $flags[$day];
         }
         return $d;
     }
-    
+
     protected function formatUser(User $user)
     {
         return array(
