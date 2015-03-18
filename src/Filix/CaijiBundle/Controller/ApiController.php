@@ -16,6 +16,48 @@ class ApiController extends Controller
     const ERROR_CODE = 500;
     const SUCCESS_CODE = 200;
 
+     /**
+     * 登录
+     * @Route("/t", name="t")
+     * @Method({"GET"})
+     * @ApiDoc(
+     *  section="Api Passport",
+     *  description="login11",
+     *  filters={
+     *      {"name"="email", "desc"="email"},
+     *      {"name"="password", "desc"="password"}
+     * }
+     * )
+     */
+    public function login1Action()
+    {
+        
+//        $t = '2015-05-10 12:10:20';
+//        echo date('W', strtotime('2015-01-02 12:00:00'));
+//        echo "<br>";
+//        echo date('W', strtotime('2015-01-03 12:00:00'));
+//        echo "<br>";
+//        echo date('W', strtotime('2015-01-04 12:00:00'));
+//        echo "<br>";
+//        echo date('W', strtotime('2015-01-05 12:00:00'));
+//        $z = "+9";
+//        $d = new \DateTime();
+//        $d->setTimestamp(strtotime($t));
+//        ld($d);
+//        $d->setTimezone(new \DateTimeZone("-1"));
+//        ld($d->format("Y-m-d H:i:s"));
+//        $s += 3600;
+//        ld($s);
+//        $d = new \DateTime();
+//        $d->setTimezone(new \DateTimeZone("+9"));
+//        $d->setTimestamp($s);
+//        ld($d);
+//        ld();
+//        $z = new \DateTimeZone("Asia/Shanghai");
+//        ld($z->getOffset(new \DateTime()));
+        exit();
+    }
+    
     /**
      * 增加记录
      * @Route("/data/add", name="log_add")
@@ -25,7 +67,7 @@ class ApiController extends Controller
      *  description="add data",
      *  filters={
      *      {"name"="token", "desc"="user token"},
-     *      {"name"="data", "desc"="data"},
+     *      {"name"="data", "desc"="data"}
      * }
      * )
      */
@@ -83,7 +125,8 @@ class ApiController extends Controller
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_day", "desc"="begin day", "type"="string, 2014-05-10"},
-     *      {"name"="end_day", "desc"="end day", "type"="string, 2014-05-15"}
+     *      {"name"="end_day", "desc"="end day", "type"="string, 2014-05-15"},
+     *      {"name"="zone", "desc"="timezone, +8"},
      * }
      * )
      */
@@ -92,13 +135,30 @@ class ApiController extends Controller
         $token = $this->getRequest()->get("token");
         $begin_day = $this->getRequest()->get("begin_day");
         $end_day = $this->getRequest()->get("end_day");
+        $zone = $this->getRequest()->get("zone", "+8");
         if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         if(!preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $begin_day) || !preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $end_day)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
-        $logs = $this->getLogRepository()->getUserLogs($user, $begin_day . ' 00:00:00', $end_day . ' 23:59:59');
+        if(!is_numeric($zone) || abs($zone)>12){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误'));
+        }
+        $timezone = new \DateTimeZone($zone);
+        $begin_day = $begin_day . ' 00:00:00';
+        $b = new \DateTime();
+        $b->setTimestamp(strtotime($begin_day));
+        $b->setTimezone($timezone);
+        $begin_day = $b->format("Y-m-d H:i:s");
+        
+        $end_day = $end_day . ' 23:59:59';
+        $e = new \DateTime();
+        $e->setTimestamp(strtotime($end_day));
+        $e->setTimezone($timezone);
+        $end_day = $e->format("Y-m-d H:i:s");
+        
+        $logs = $this->getLogRepository()->getUserLogs($user, $begin_day , $end_day);
         $t = array();
         foreach ($logs as $log) {
             $t[] = array('time' => $log->getCreatedAt()->getTimestamp(),
@@ -121,7 +181,8 @@ class ApiController extends Controller
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_day", "desc"="begin day", "type"="string, 2014-05-10"},
-     *      {"name"="end_day", "desc"="end day", "type"="string, 2014-05-15"}
+     *      {"name"="end_day", "desc"="end day", "type"="string, 2014-05-15"},
+     *      {"name"="zone", "desc"="timezone, +8"}
      * }
      * )
      */
@@ -130,16 +191,35 @@ class ApiController extends Controller
         $token = $this->getRequest()->get("token");
         $begin_day = $this->getRequest()->get("begin_day");
         $end_day = $this->getRequest()->get("end_day");
+        $zone = $this->getRequest()->get("zone", "+8");
         if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         if(!preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $begin_day) || !preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $end_day)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
-        $logs = $this->getLogRepository()->getUserLogs($user, $begin_day . ' 00:00:00', $end_day . ' 23:59:59');
+        if(!is_numeric($zone) || abs($zone)>12){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误'));
+        }
+        $timezone = new \DateTimeZone($zone);
+        $begin_day = $begin_day . ' 00:00:00';
+        $b = new \DateTime();
+        $b->setTimestamp(strtotime($begin_day));
+        $b->setTimezone($timezone);
+        $begin_day = $b->format("Y-m-d H:i:s");
+        
+        $end_day = $end_day . ' 23:59:59';
+        $e = new \DateTime();
+        $e->setTimestamp(strtotime($end_day));
+        $e->setTimezone($timezone);
+        $end_day = $e->format("Y-m-d H:i:s");
+        $logs = $this->getLogRepository()->getUserLogs($user, $begin_day, $end_day);
         $tmp = array();
+        
         foreach ($logs as $log) {
-            $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
+            $w = $log->getCreatedAt()->setTimezone($timezone)->format('Y-m-d');
+//            $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
+            
             $d = $this->formatLog($log);
             if(!isset($tmp[$w])){
                 $tmp[$w] = $d;
@@ -152,12 +232,21 @@ class ApiController extends Controller
             }
         }
         $t = array();
+        $d = new \DateTime();
+        $d->setTimezone($timezone);
         foreach($tmp as $key => $v){
-            $time = strtotime($key . ' 00:00:00');
-            $w = date('Y-W', $time);
+            $arr = explode('-', $key);
+            $d->setDate($arr[0], $arr[1], $arr[2]);
+            $d->setTime(0, 0, 0);
+//            $time = strtotime($key . ' 00:00:00');
+//            $w = date('Y-W', $time);
+            $time = $d->getTimestamp();
+            $w = $d->format('Y-W');
             if(!isset($t[$w])){
-                $k = date('N', $time);
-                $t[$w]['time'] = date('Y-m-d', $time - (date('N', $time) - 1) * 24 * 3600);
+//                $k = date('N', $time);
+                $k = $d->format('N');
+//                $t[$w]['time'] = date('Y-m-d', $time - (date('N', $time) - 1) * 24 * 3600);
+                $t[$w]['time'] = $d->setTimestamp($time - (date('N', $time) - 1) * 24 * 3600)->format('Y-m-d');
             }
             $t[$w]['data'][] = array('time' => $key, 'data' => $v);
         }
@@ -452,6 +541,7 @@ class ApiController extends Controller
             ));
     }
 
+   
     /**
      * 登录
      * @Route("/passport/login", name="passport_login")
