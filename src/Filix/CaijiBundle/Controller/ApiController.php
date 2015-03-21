@@ -9,6 +9,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Filix\CaijiBundle\Entity\Log;
 use Filix\CaijiBundle\Entity\User;
+use Filix\CaijiBundle\Util\DateTimeUtil;
 
 class ApiController extends Controller
 {
@@ -29,32 +30,9 @@ class ApiController extends Controller
      * }
      * )
      */
-    public function login1Action()
+    public function test()
     {
-        
-//        $t = '2015-05-10 12:10:20';
-//        echo date('W', strtotime('2015-01-02 12:00:00'));
-//        echo "<br>";
-//        echo date('W', strtotime('2015-01-03 12:00:00'));
-//        echo "<br>";
-//        echo date('W', strtotime('2015-01-04 12:00:00'));
-//        echo "<br>";
-//        echo date('W', strtotime('2015-01-05 12:00:00'));
-//        $z = "+9";
-//        $d = new \DateTime();
-//        $d->setTimestamp(strtotime($t));
-//        ld($d);
-//        $d->setTimezone(new \DateTimeZone("-1"));
-//        ld($d->format("Y-m-d H:i:s"));
-//        $s += 3600;
-//        ld($s);
-//        $d = new \DateTime();
-//        $d->setTimezone(new \DateTimeZone("+9"));
-//        $d->setTimestamp($s);
-//        ld($d);
-//        ld();
-//        $z = new \DateTimeZone("Asia/Shanghai");
-//        ld($z->getOffset(new \DateTime()));
+       
         exit();
     }
     
@@ -118,7 +96,7 @@ class ApiController extends Controller
     /**
      * 根据天获取记录
      * @Route("/data/list/day", name="log_list_day")
-     * @Method({"POST"})
+     * @Method({"POST", "GET"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
@@ -126,7 +104,7 @@ class ApiController extends Controller
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_day", "desc"="begin day", "type"="string, 2014-05-10"},
      *      {"name"="end_day", "desc"="end day", "type"="string, 2014-05-15"},
-     *      {"name"="zone", "desc"="timezone, +8"},
+     *      {"name"="zone", "desc"="timezone, GMT+8"},
      * }
      * )
      */
@@ -135,29 +113,26 @@ class ApiController extends Controller
         $token = $this->getRequest()->get("token");
         $begin_day = $this->getRequest()->get("begin_day");
         $end_day = $this->getRequest()->get("end_day");
-        $zone = $this->getRequest()->get("zone", "+8");
+        $zone = $this->getRequest()->get("zone", "GMT+8");
         if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         if(!preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $begin_day) || !preg_match('/\d{4}-\d{1,2}-\d{1,2}/', $end_day)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
-        if(!is_numeric($zone) || abs($zone)>12){
-            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误'));
+        $zone = strtoupper($zone);
+        if(!preg_match('/^GMT[+-]\d{1,2}$/', $zone)){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误: GMT+8'));
         }
+
         $timezone = new \DateTimeZone($zone);
         $begin_day = $begin_day . ' 00:00:00';
-        $b = new \DateTime();
-        $b->setTimestamp(strtotime($begin_day));
-        $b->setTimezone($timezone);
-        $begin_day = $b->format("Y-m-d H:i:s");
-        
+        $gmt8 = DateTimeUtil::toMGT8($begin_day, $timezone);
+        $begin_day = $gmt8->format("Y-m-d H:i:s");
         $end_day = $end_day . ' 23:59:59';
-        $e = new \DateTime();
-        $e->setTimestamp(strtotime($end_day));
-        $e->setTimezone($timezone);
-        $end_day = $e->format("Y-m-d H:i:s");
-        
+        $gmt8 = DateTimeUtil::toMGT8($end_day, $timezone);
+        $end_day = $gmt8->format("Y-m-d H:i:s");
+
         $logs = $this->getLogRepository()->getUserLogs($user, $begin_day , $end_day);
         $t = array();
         foreach ($logs as $log) {
@@ -174,7 +149,7 @@ class ApiController extends Controller
     /**
      * 根据week获取记录
      * @Route("/data/list/week", name="log_list_week")
-     * @Method({"POST"})
+     * @Method({"POST", "GET"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
@@ -182,7 +157,7 @@ class ApiController extends Controller
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_day", "desc"="begin day", "type"="string, 2014-05-10"},
      *      {"name"="end_day", "desc"="end day", "type"="string, 2014-05-15"},
-     *      {"name"="zone", "desc"="timezone, +8"}
+     *      {"name"="zone", "desc"="timezone, GMT+8"}
      * }
      * )
      */
@@ -191,35 +166,30 @@ class ApiController extends Controller
         $token = $this->getRequest()->get("token");
         $begin_day = $this->getRequest()->get("begin_day");
         $end_day = $this->getRequest()->get("end_day");
-        $zone = $this->getRequest()->get("zone", "+8");
+        $zone = $this->getRequest()->get("zone", "GMT+8");
         if (!$user = $this->getUserRepository()->findOneBy(array('token' => $token))) {
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '用户不存在'));
         }
         if(!preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $begin_day) || !preg_match('/^\d{4}-\d{1,2}-\d{1,2}$/', $end_day)){
-            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误: 2015-01-01'));
         }
-        if(!is_numeric($zone) || abs($zone)>12){
-            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误'));
+        $zone = strtoupper($zone);
+        if(!preg_match('/^GMT[+-]\d{1,2}$/', $zone)){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误: GMT+8'));
         }
+
         $timezone = new \DateTimeZone($zone);
         $begin_day = $begin_day . ' 00:00:00';
-        $b = new \DateTime();
-        $b->setTimestamp(strtotime($begin_day));
-        $b->setTimezone($timezone);
-        $begin_day = $b->format("Y-m-d H:i:s");
-        
+        $gmt8 = DateTimeUtil::toMGT8($begin_day, $timezone);
+        $begin_day = $gmt8->format("Y-m-d H:i:s");
         $end_day = $end_day . ' 23:59:59';
-        $e = new \DateTime();
-        $e->setTimestamp(strtotime($end_day));
-        $e->setTimezone($timezone);
-        $end_day = $e->format("Y-m-d H:i:s");
+        $gmt8 = DateTimeUtil::toMGT8($end_day, $timezone);
+        $end_day = $gmt8->format("Y-m-d H:i:s");
+        
         $logs = $this->getLogRepository()->getUserLogs($user, $begin_day, $end_day);
         $tmp = array();
-        
         foreach ($logs as $log) {
             $w = $log->getCreatedAt()->setTimezone($timezone)->format('Y-m-d');
-//            $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
-            
             $d = $this->formatLog($log);
             if(!isset($tmp[$w])){
                 $tmp[$w] = $d;
@@ -238,15 +208,10 @@ class ApiController extends Controller
             $arr = explode('-', $key);
             $d->setDate($arr[0], $arr[1], $arr[2]);
             $d->setTime(0, 0, 0);
-//            $time = strtotime($key . ' 00:00:00');
-//            $w = date('Y-W', $time);
             $time = $d->getTimestamp();
             $w = $d->format('Y-W');
             if(!isset($t[$w])){
-//                $k = date('N', $time);
-                $k = $d->format('N');
-//                $t[$w]['time'] = date('Y-m-d', $time - (date('N', $time) - 1) * 24 * 3600);
-                $t[$w]['time'] = $d->setTimestamp($time - (date('N', $time) - 1) * 24 * 3600)->format('Y-m-d');
+                $t[$w]['time'] = $d->setTimestamp($time - ($d->format('N') - 1) * 24 * 3600)->format('Y-m-d');
             }
             $t[$w]['data'][] = array('time' => $key, 'data' => $v);
         }
@@ -256,18 +221,19 @@ class ApiController extends Controller
             'data' => array_values($t),
         ));
     }
-    
+
     /**
      * 根据month获取记录
      * @Route("/data/list/month", name="log_list_month")
-     * @Method({"POST"})
+     * @Method({"POST", "GET"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_month", "desc"="begin month", "type"="string, 2014-05"},
-     *      {"name"="end_month", "desc"="end month", "type"="string, 2014-12"}
+     *      {"name"="end_month", "desc"="end month", "type"="string, 2014-12"},
+     *      {"name"="zone", "desc"="timezone, GMT+8"}
      * }
      * )
      */
@@ -282,7 +248,16 @@ class ApiController extends Controller
         if(!preg_match('/^\d{4}-\d{1,2}$/', $begin_month) || !preg_match('/^\d{4}-\d{1,2}$/', $end_month)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
+        $zone = $this->getRequest()->get("zone", "GMT+8");
+        $zone = strtoupper($zone);
+        if(!preg_match('/^GMT[+-]\d{1,2}$/', $zone)){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误: GMT+8'));
+        }
+        
         $first_day = $begin_month . '-01 00:00:00';
+        $timezone = new \DateTimeZone($zone);
+        $gmt8 = DateTimeUtil::toMGT8($first_day, $timezone);
+        $first_day = $gmt8->format("Y-m-d H:i:s");
         list($y, $m) = explode('-', $end_month);
         if($m == 12){
             $y++;
@@ -290,11 +265,14 @@ class ApiController extends Controller
         }else{
             $m++;
         }
-        $last_day = date('Y-m-d H:i:s', strtotime($y.'-'.$m.'-01 00:00:00') - 1);
+        $last_day = $y.'-'.$m.'-01 00:00:00';
+        $gmt8 = DateTimeUtil::toMGT8($last_day, $timezone);
+        $last_day = $gmt8->format("Y-m-d H:i:s");
+        $last_day = date('Y-m-d H:i:s', strtotime($last_day) - 1);
         $logs = $this->getLogRepository()->getUserLogs($user, $first_day, $last_day);
         $tmp = array();
         foreach ($logs as $log) {
-            $w = date('Y-m-d', $log->getCreatedAt()->getTimestamp());
+            $w = $log->getCreatedAt()->setTimezone($timezone)->format('Y-m-d');
             $d = $this->formatLog($log);
             if(!isset($tmp[$w])){
                 $tmp[$w] = $d;
@@ -306,10 +284,9 @@ class ApiController extends Controller
                 }
             }
         }
-        $t = array();
         foreach($tmp as $key => $v){
-            $time = strtotime($key . ' 00:00:00');
-            $w = date('Y-m', $time);
+            $arr = explode('-', $key);
+            $w = $arr[0] . '-' . $arr[1];
             if(!isset($t[$w])){
                 $t[$w]['time'] = $w;
             }
@@ -325,14 +302,15 @@ class ApiController extends Controller
     /**
      * 根据year获取记录
      * @Route("/data/list/year", name="log_list_year")
-     * @Method({"POST"})
+     * @Method({"POST", "GET"})
      * @ApiDoc(
      *  section="Api Data",
      *  description="data list",
      *  filters={
      *      {"name"="token", "desc"="user token"},
      *      {"name"="begin_year", "desc"="begin year", "type"="string, 2010"},
-     *      {"name"="end_year", "desc"="end year", "type"="string, 2014"}
+     *      {"name"="end_year", "desc"="end year", "type"="string, 2014"},
+     *      {"name"="zone", "desc"="timezone, GMT+8"}
      * }
      * )
      */
@@ -347,12 +325,23 @@ class ApiController extends Controller
         if(!preg_match('/^\d{4}$/', $begin_year) || !preg_match('/^\d{4}$/', $end_year)){
             return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时间格式错误'));
         }
+        $zone = $this->getRequest()->get("zone", "GMT+8");
+        $zone = strtoupper($zone);
+        if(!preg_match('/^GMT[+-]\d{1,2}$/', $zone)){
+            return new JsonResponse(array('code' => self::ERROR_CODE, 'msg' => '时区格式错误: GMT+8'));
+        }
+        $timezone = new \DateTimeZone($zone);
         $first_day = $begin_year . '-01-01 00:00:00';
+        $gmt8 = DateTimeUtil::toMGT8($first_day, $timezone);
+        $first_day = $gmt8->format("Y-m-d H:i:s");
         $last_day = $end_year.'-12-31 23:59:59';
+        $gmt8 = DateTimeUtil::toMGT8($last_day, $timezone);
+        $last_day = $gmt8->format("Y-m-d H:i:s");
+        
         $logs = $this->getLogRepository()->getUserLogs($user, $first_day, $last_day);
         $tmp = array();
         foreach ($logs as $log) {
-            $w = date('Y-m', $log->getCreatedAt()->getTimestamp());
+            $w = $log->getCreatedAt()->setTimezone($timezone)->format('Y-m');
             $d = $this->formatLog($log);
             if(!isset($tmp[$w])){
                 $tmp[$w] = $d;
@@ -367,7 +356,8 @@ class ApiController extends Controller
         $t = array();
         foreach($tmp as $key => $v){
             $time = strtotime($key . '-01 00:00:00');
-            $w = date('Y', $time);
+            $arr = explode('-', $key);
+            $w = $arr[0];
             if(!isset($t[$w])){
                 $t[$w]['time'] = $w;
             }
