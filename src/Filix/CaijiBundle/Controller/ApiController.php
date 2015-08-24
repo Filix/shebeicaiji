@@ -42,15 +42,15 @@ class ApiController extends Controller
         $datas = json_decode($data, true);
         $tmp = array();
         foreach ($datas as $d) {
-            $hour = $d['time'] - $d['time'] % 3600; //每小时存一条数据，时间取0分0秒
-            if (!in_array($hour, $tmp)) {
-                $tmp[] = $hour;
-                $log = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $hour));
+            $minute = $d['time'] - $d['time'] % 60; //每分钟存一条数据，时间取0分0秒
+            if (!in_array($minute, $tmp)) {
+                $tmp[] = $minute;
+                $log = $this->getLogRepository()->getLog($user, date('Y-m-d H:i:s', $minute));
                 if (!$log) {
                     $log = new Log();
                     $log->setUser($user);
                     $datetime = new \DateTime();
-                    $log->setCreatedAt($datetime->setTimestamp($hour));
+                    $log->setCreatedAt($datetime->setTimestamp($minute));
                 } else {
                     $log = $log[0];
                 }
