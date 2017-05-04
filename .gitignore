@@ -7,7 +7,6 @@ code_check.php
 /app/logs/*
 /vendor/
 /app/config/parameters.yml
-composer.lock
 composer.phar
 /web/js/*
 /web/css/*
