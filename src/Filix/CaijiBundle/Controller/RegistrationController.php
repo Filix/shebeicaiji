@@ -3,6 +3,8 @@ namespace Filix\CaijiBundle\Controller;
 
 use FOS\UserBundle\Controller\RegistrationController as BaseController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Request;
+
 
 /**
  * Description of RegistrationController
@@ -11,7 +13,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
  */
 class RegistrationController extends BaseController
 {
-    public function registerAction()
+    public function registerAction(Request $request)
     {
         if($this->container->get('security.context')->isGranted('ROLE_USER')){
             $url = $this->container->get('router')->generate('index');

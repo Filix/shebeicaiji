@@ -72,6 +72,9 @@ fos_user:
     db_driver: orm 
     firewall_name: main
     user_class: Filix\CaijiBundle\Entity\User
+    from_email:
+        address: you@example.com
+        sender_name: You
     
     #需要邮件激活
     registration:
