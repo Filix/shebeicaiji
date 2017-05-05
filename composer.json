@@ -19,7 +19,7 @@
         "sensio/framework-extra-bundle": "~3.0",
         "sensio/generator-bundle": "~2.3",
         "incenteev/composer-parameter-handler": "~2.0",
-        "friendsofsymfony/user-bundle": "*",
+        "friendsofsymfony/user-bundle": "~1.3",
         "raulfraile/ladybug-bundle": "0.7",
         "nelmio/api-doc-bundle": "2.3.1"
     },

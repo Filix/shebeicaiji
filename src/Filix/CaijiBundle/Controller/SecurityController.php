@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 class SecurityController extends BaseController
 {
 
-    public function loginAction(Request $request)
+    public function loginAction()
     {
         if($this->container->get('security.context')->isGranted('ROLE_USER')){
             $url = $this->container->get('router')->generate('index');

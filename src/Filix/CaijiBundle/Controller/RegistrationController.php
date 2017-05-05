@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class RegistrationController extends BaseController
 {
-    public function registerAction(Request $request)
+    public function registerAction()
     {
         if($this->container->get('security.context')->isGranted('ROLE_USER')){
             $url = $this->container->get('router')->generate('index');
